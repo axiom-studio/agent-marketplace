@@ -1,7 +1,6 @@
-apiVersion: marketplace.axiomstudio.ai/v1
-kind: AgentListing
+apiVersion: axiom.studio/v1
+kind: AgentLibraryVersion
 metadata:
-  id: webhook-receiver
   name: Webhook Receiver
   description: Receive and process webhook events from external services
   version: 1.0.0
@@ -13,32 +12,105 @@ metadata:
   author: Axiom Studio
   authorEmail: support@axiomstudio.ai
   license: Apache-2.0
-  deprecated: false
 
 spec:
-  skills: []
-  nodeTypes:
-    - webhook-trigger
-    - http-request
-  permissions:
-    - network:inbound
+  nodes:
+    - id: webhook
+      name: Webhook Trigger
+      description: Receive webhook request
+      type: webhook-trigger
+      position:
+        x: 100
+        y: 200
+      config:
+        path: /webhook/{source}
+        methods:
+          - POST
+        verifySignature: true
+        secret: "${env.WEBHOOK_SECRET}"
 
-  inputSchema: ./input-schema.yaml
-  outputSchema: ./output-schema.yaml
-  workflow: ./workflow.yaml
+    - id: validate
+      name: Validate
+      description: Validate webhook signature
+      type: validation
+      position:
+        x: 350
+        y: 200
+      config:
+        rules:
+          - field: headers.X-Hub-Signature-256
+            condition: validSignature
 
-  defaultConfig:
-    verifySignature: true
-    allowedOrigins: []
-    rateLimit: 100
+    - id: process
+      name: Process Event
+      description: Process webhook payload
+      type: switch
+      position:
+        x: 600
+        y: 200
+      config:
+        field: "{{webhook.source}}"
+        cases:
+          github: github-handler
+          stripe: stripe-handler
+          default: default-handler
 
-  env:
-    - name: WEBHOOK_SECRET
-      required: false
-      description: Secret for signature verification
-      secret: true
+    - id: output
+      name: Output
+      description: Return response
+      type: output
+      position:
+        x: 850
+        y: 200
+      config:
+        received: true
+        eventId: "{{webhook.eventId}}"
+        processed: "{{process.success}}"
 
-  resources:
-    cpu: "50m"
-    memory: "128Mi"
-    timeout: 30
+  connections:
+    - id: conn-1
+      sourceNodeId: webhook
+      targetNodeId: validate
+    - id: conn-2
+      sourceNodeId: validate
+      targetNodeId: process
+    - id: conn-3
+      sourceNodeId: process
+      targetNodeId: output
+
+  inputSchema:
+    event:
+      type: string
+      description: Event type from webhook source
+    payload:
+      type: object
+      description: Webhook payload data
+    headers:
+      type: object
+      description: HTTP headers from webhook
+    source:
+      type: string
+      description: Webhook source identifier
+      enum:
+        - github
+        - stripe
+        - slack
+        - custom
+
+  outputSchema:
+    received:
+      type: boolean
+      description: Whether webhook was received
+    eventId:
+      type: string
+      description: Unique event identifier
+    processed:
+      type: boolean
+      description: Whether webhook was processed
+
+  dependencies:
+    nodeTypes:
+      - webhook-trigger
+      - http-request
+    permissions:
+      - network:inbound

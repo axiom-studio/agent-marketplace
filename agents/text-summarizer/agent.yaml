@@ -1,7 +1,6 @@
-apiVersion: marketplace.axiomstudio.ai/v1
-kind: AgentListing
+apiVersion: axiom.studio/v1
+kind: AgentLibraryVersion
 metadata:
-  id: text-summarizer
   name: Text Summarizer
   description: Summarize long text into concise summaries using AI
   version: 1.0.0
@@ -13,31 +12,119 @@ metadata:
   author: Axiom Studio
   authorEmail: support@axiomstudio.ai
   license: Apache-2.0
-  deprecated: false
 
 spec:
-  skills: []
-  nodeTypes:
-    - llm-inference
-  permissions:
-    - network:outbound
+  nodes:
+    - id: input
+      name: Input
+      description: Receive text input
+      type: input
+      position:
+        x: 100
+        y: 200
+      config:
+        fields:
+          - name: text
+            type: string
+            required: true
+            description: The text to summarize
+          - name: maxLength
+            type: integer
+            default: 200
+            description: Maximum summary length in words
+          - name: style
+            type: string
+            default: concise
+            enum:
+              - concise
+              - detailed
+              - bullet-points
 
-  inputSchema: ./input-schema.yaml
-  outputSchema: ./output-schema.yaml
-  workflow: ./workflow.yaml
+    - id: llm
+      name: LLM Summarizer
+      description: Generate summary using LLM
+      type: llm-inference
+      position:
+        x: 400
+        y: 200
+      config:
+        model: gpt-4
+        temperature: 0.3
+        prompt: |
+          Summarize the following text in a {{style}} manner.
+          Maximum {{maxLength}} words.
 
-  defaultConfig:
-    model: gpt-4
-    maxLength: 200
-    style: concise
+          Text: {{input.text}}
 
-  env:
-    - name: OPENAI_API_KEY
+          Return a JSON object with:
+          - summary: the summary text
+          - keyPoints: array of 3-5 key points
+          - sentiment: overall sentiment (positive/negative/neutral/mixed)
+
+    - id: output
+      name: Output
+      description: Return the summary
+      type: output
+      position:
+        x: 700
+        y: 200
+      config:
+        summary: "{{llm.summary}}"
+        wordCount: "{{llm.summary.split(' ').length}}"
+        keyPoints: "{{llm.keyPoints}}"
+        sentiment: "{{llm.sentiment}}"
+
+  connections:
+    - id: conn-1
+      sourceNodeId: input
+      targetNodeId: llm
+    - id: conn-2
+      sourceNodeId: llm
+      targetNodeId: output
+
+  inputSchema:
+    text:
+      type: string
       required: true
-      description: OpenAI API key for LLM inference
-      secret: true
+      description: The text to summarize
+      minLength: 50
+      maxLength: 50000
+    maxLength:
+      type: integer
+      description: Maximum summary length in words
+      default: 200
+    style:
+      type: string
+      description: Summary style
+      default: concise
+      enum:
+        - concise
+        - detailed
+        - bullet-points
 
-  resources:
-    cpu: "100m"
-    memory: "256Mi"
-    timeout: 60
+  outputSchema:
+    summary:
+      type: string
+      description: The generated summary
+    wordCount:
+      type: integer
+      description: Number of words in summary
+    keyPoints:
+      type: array
+      description: Key points extracted
+      items:
+        type: string
+    sentiment:
+      type: string
+      description: Overall sentiment
+      enum:
+        - positive
+        - negative
+        - neutral
+        - mixed
+
+  dependencies:
+    nodeTypes:
+      - llm-inference
+    permissions:
+      - network:outbound

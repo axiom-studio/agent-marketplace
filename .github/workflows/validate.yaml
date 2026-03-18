@@ -39,11 +39,6 @@ jobs:
                 exit 1
               fi
 
-              if [ ! -f "${agent_dir}workflow.yaml" ]; then
-                echo "Error: ${agent_dir}workflow.yaml not found"
-                exit 1
-              fi
-
               echo "  ✓ Required files present for $agent_name"
             fi
           done
@@ -68,8 +63,8 @@ jobs:
           import sys
 
           required_fields = ['apiVersion', 'kind', 'metadata', 'spec']
-          metadata_fields = ['id', 'name', 'description', 'version', 'category', 'author']
-          spec_fields = ['workflow']
+          metadata_fields = ['name', 'description', 'version', 'category']
+          spec_fields = ['nodes']
 
           errors = []
 
@@ -79,6 +74,14 @@ jobs:
                   with open(agent_path) as f:
                       try:
                           agent = yaml.safe_load(f)
+
+                          # Check apiVersion
+                          if agent.get('apiVersion') != 'axiom.studio/v1':
+                              errors.append(f"{agent_dir}: Invalid apiVersion '{agent.get('apiVersion')}', expected 'axiom.studio/v1'")
+
+                          # Check kind
+                          if agent.get('kind') != 'AgentLibraryVersion':
+                              errors.append(f"{agent_dir}: Invalid kind '{agent.get('kind')}', expected 'AgentLibraryVersion'")
 
                           # Check required top-level fields
                           for field in required_fields:
@@ -96,6 +99,14 @@ jobs:
                               for field in spec_fields:
                                   if field not in agent['spec']:
                                       errors.append(f"{agent_dir}: Missing spec field '{field}'")
+
+                              # Validate nodes have required fields
+                              if 'nodes' in agent['spec']:
+                                  for node in agent['spec']['nodes']:
+                                      if 'id' not in node:
+                                          errors.append(f"{agent_dir}: Node missing 'id' field")
+                                      if 'type' not in node:
+                                          errors.append(f"{agent_dir}: Node missing 'type' field")
 
                           print(f"✓ {agent_dir}: agent.yaml structure valid")
 
@@ -117,19 +128,19 @@ jobs:
           import yaml
           import os
 
-          agent_ids = []
+          agent_names = []
 
           for agent_dir in os.listdir('agents'):
               agent_path = os.path.join('agents', agent_dir, 'agent.yaml')
               if os.path.exists(agent_path):
                   with open(agent_path) as f:
                       agent = yaml.safe_load(f)
-                      agent_id = agent.get('metadata', {}).get('id')
-                      if agent_id:
-                          if agent_id in agent_ids:
-                              print(f"Error: Duplicate agent ID '{agent_id}'")
+                      name = agent.get('metadata', {}).get('name')
+                      if name:
+                          if name in agent_names:
+                              print(f"Error: Duplicate agent name '{name}'")
                               exit(1)
-                          agent_ids.append(agent_id)
+                          agent_names.append(name)
 
-          print(f"✓ No duplicate agent IDs found ({len(agent_ids)} unique IDs)")
+          print(f"✓ No duplicate agent names found ({len(agent_names)} unique names)")
           EOF

@@ -1,7 +1,6 @@
-apiVersion: marketplace.axiomstudio.ai/v1
-kind: AgentListing
+apiVersion: axiom.studio/v1
+kind: AgentLibraryVersion
 metadata:
-  id: email-sender
   name: Email Sender
   description: Send emails with templates and attachments
   version: 1.0.0
@@ -13,42 +12,112 @@ metadata:
   author: Axiom Studio
   authorEmail: support@axiomstudio.ai
   license: Apache-2.0
-  deprecated: false
 
 spec:
-  skills: []
-  nodeTypes:
-    - http-request
-  permissions:
-    - network:outbound
+  nodes:
+    - id: input
+      name: Input
+      description: Receive email parameters
+      type: input
+      position:
+        x: 100
+        y: 200
+      config:
+        fields:
+          - name: to
+            type: array
+            required: true
+            description: Recipient email addresses
+          - name: subject
+            type: string
+            required: true
+            description: Email subject
+          - name: body
+            type: string
+            required: true
+            description: Email body
+          - name: isHtml
+            type: boolean
+            default: false
+            description: Whether body is HTML
 
-  inputSchema: ./input-schema.yaml
-  outputSchema: ./output-schema.yaml
-  workflow: ./workflow.yaml
+    - id: smtp
+      name: SMTP Sender
+      description: Send email via SMTP
+      type: http-request
+      position:
+        x: 400
+        y: 200
+      config:
+        method: POST
+        url: "${env.SMTP_HOST}:${env.SMTP_PORT}/send"
+        auth:
+          type: basic
+          username: "${env.SMTP_USER}"
+          password: "${env.SMTP_PASSWORD}"
+        body:
+          to: "{{input.to}}"
+          subject: "{{input.subject}}"
+          body: "{{input.body}}"
+          isHtml: "{{input.isHtml}}"
 
-  defaultConfig:
-    provider: smtp
-    retryAttempts: 3
+    - id: output
+      name: Output
+      description: Return send result
+      type: output
+      position:
+        x: 700
+        y: 200
+      config:
+        success: "{{smtp.success}}"
+        messageId: "{{smtp.messageId}}"
+        sentAt: "{{smtp.timestamp}}"
 
-  env:
-    - name: SMTP_HOST
-      required: true
-      description: SMTP server hostname
-      secret: false
-    - name: SMTP_PORT
-      required: true
-      description: SMTP server port
-      secret: false
-    - name: SMTP_USER
-      required: true
-      description: SMTP username
-      secret: false
-    - name: SMTP_PASSWORD
-      required: true
-      description: SMTP password
-      secret: true
+  connections:
+    - id: conn-1
+      sourceNodeId: input
+      targetNodeId: smtp
+    - id: conn-2
+      sourceNodeId: smtp
+      targetNodeId: output
 
-  resources:
-    cpu: "50m"
-    memory: "128Mi"
-    timeout: 30
+  inputSchema:
+    to:
+      type: array
+      required: true
+      description: Recipient email addresses
+      items:
+        type: string
+        format: email
+    subject:
+      type: string
+      required: true
+      description: Email subject
+      minLength: 1
+      maxLength: 200
+    body:
+      type: string
+      required: true
+      description: Email body
+    isHtml:
+      type: boolean
+      default: false
+      description: Whether body is HTML
+
+  outputSchema:
+    success:
+      type: boolean
+      description: Whether email was sent successfully
+    messageId:
+      type: string
+      description: Unique message identifier
+    sentAt:
+      type: string
+      format: date-time
+      description: Timestamp when email was sent
+
+  dependencies:
+    nodeTypes:
+      - http-request
+    permissions:
+      - network:outbound
