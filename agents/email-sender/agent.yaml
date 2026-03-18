@@ -117,6 +117,8 @@ spec:
       description: Timestamp when email was sent
 
   dependencies:
+    skills:
+      - id: core
     nodeTypes:
       - http-request
     permissions:

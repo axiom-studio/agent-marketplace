@@ -124,6 +124,8 @@ spec:
         - mixed
 
   dependencies:
+    skills:
+      - id: core
     nodeTypes:
       - llm-inference
     permissions:
