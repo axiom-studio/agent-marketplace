@@ -1,0 +1,47 @@
+apiVersion: marketplace.axiomstudio.ai/v1
+kind: MarketplaceRepository
+metadata:
+  name: axiom-official
+  displayName: Axiom Official Agents
+  description: Official agent workflows maintained by Axiom Studio
+  version: 1.0.0
+  author: Axiom Studio
+  authorEmail: support@axiomstudio.ai
+  homepage: https://github.com/axiomstudio/agent-marketplace
+  license: Apache-2.0
+
+spec:
+  type: official
+  branch: main
+  syncInterval: 60
+
+  categories:
+    - id: data-processing
+      name: Data Processing
+      description: Agents for data transformation, ETL, and processing
+      icon: database
+
+    - id: ml-inference
+      name: ML & AI
+      description: Machine learning and AI inference agents
+      icon: brain
+
+    - id: notifications
+      name: Notifications
+      description: Alert, messaging, and notification agents
+      icon: bell
+
+    - id: integration
+      name: Integration
+      description: Third-party service integrations and connectors
+      icon: plug
+
+    - id: automation
+      name: Automation
+      description: Workflow automation and orchestration agents
+      icon: gear
+
+    - id: utilities
+      name: Utilities
+      description: Helper and utility agents
+      icon: wrench

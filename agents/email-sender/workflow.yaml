@@ -1,0 +1,57 @@
+apiVersion: workflow.axiomstudio.ai/v1
+kind: Workflow
+metadata:
+  name: email-sender
+spec:
+  entryPoint: send
+  nodes:
+    - id: input
+      type: input
+      config:
+        schema: ${inputSchema}
+
+    - id: validate
+      type: validation
+      dependsOn: [input]
+      config:
+        rules:
+          - field: to
+            condition: notEmpty
+            message: "At least one recipient required"
+          - field: subject
+            condition: notEmpty
+            message: "Subject is required"
+
+    - id: send
+      type: http-request
+      dependsOn: [validate]
+      config:
+        method: POST
+        url: ${env.SMTP_HOST}:${env.SMTP_PORT}/send
+        auth:
+          type: basic
+          username: ${env.SMTP_USER}
+          password: ${env.SMTP_PASSWORD}
+        body:
+          to: ${input.to}
+          cc: ${input.cc}
+          bcc: ${input.bcc}
+          subject: ${input.subject}
+          body: ${input.body}
+          isHtml: ${input.isHtml}
+          attachments: ${input.attachments}
+        retry:
+          attempts: ${config.retryAttempts}
+          delay: 1000
+
+    - id: output
+      type: output
+      dependsOn: [send]
+      config:
+        schema: ${outputSchema}
+
+  outputs:
+    success: ${send.success}
+    messageId: ${send.messageId}
+    sentAt: ${send.timestamp}
+    recipients: ${input.to.length + (input.cc?.length || 0) + (input.bcc?.length || 0)}

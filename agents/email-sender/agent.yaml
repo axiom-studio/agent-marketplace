@@ -1,0 +1,54 @@
+apiVersion: marketplace.axiomstudio.ai/v1
+kind: AgentListing
+metadata:
+  id: email-sender
+  name: Email Sender
+  description: Send emails with templates and attachments
+  version: 1.0.0
+  category: notifications
+  tags:
+    - email
+    - notifications
+    - smtp
+  author: Axiom Studio
+  authorEmail: support@axiomstudio.ai
+  license: Apache-2.0
+  deprecated: false
+
+spec:
+  skills: []
+  nodeTypes:
+    - http-request
+  permissions:
+    - network:outbound
+
+  inputSchema: ./input-schema.yaml
+  outputSchema: ./output-schema.yaml
+  workflow: ./workflow.yaml
+
+  defaultConfig:
+    provider: smtp
+    retryAttempts: 3
+
+  env:
+    - name: SMTP_HOST
+      required: true
+      description: SMTP server hostname
+      secret: false
+    - name: SMTP_PORT
+      required: true
+      description: SMTP server port
+      secret: false
+    - name: SMTP_USER
+      required: true
+      description: SMTP username
+      secret: false
+    - name: SMTP_PASSWORD
+      required: true
+      description: SMTP password
+      secret: true
+
+  resources:
+    cpu: "50m"
+    memory: "128Mi"
+    timeout: 30

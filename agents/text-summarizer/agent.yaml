@@ -1,0 +1,43 @@
+apiVersion: marketplace.axiomstudio.ai/v1
+kind: AgentListing
+metadata:
+  id: text-summarizer
+  name: Text Summarizer
+  description: Summarize long text into concise summaries using AI
+  version: 1.0.0
+  category: ml-inference
+  tags:
+    - nlp
+    - summarization
+    - ai
+  author: Axiom Studio
+  authorEmail: support@axiomstudio.ai
+  license: Apache-2.0
+  deprecated: false
+
+spec:
+  skills: []
+  nodeTypes:
+    - llm-inference
+  permissions:
+    - network:outbound
+
+  inputSchema: ./input-schema.yaml
+  outputSchema: ./output-schema.yaml
+  workflow: ./workflow.yaml
+
+  defaultConfig:
+    model: gpt-4
+    maxLength: 200
+    style: concise
+
+  env:
+    - name: OPENAI_API_KEY
+      required: true
+      description: OpenAI API key for LLM inference
+      secret: true
+
+  resources:
+    cpu: "100m"
+    memory: "256Mi"
+    timeout: 60

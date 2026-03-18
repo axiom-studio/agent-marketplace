@@ -1,0 +1,44 @@
+apiVersion: marketplace.axiomstudio.ai/v1
+kind: AgentListing
+metadata:
+  id: webhook-receiver
+  name: Webhook Receiver
+  description: Receive and process webhook events from external services
+  version: 1.0.0
+  category: integration
+  tags:
+    - webhook
+    - integration
+    - events
+  author: Axiom Studio
+  authorEmail: support@axiomstudio.ai
+  license: Apache-2.0
+  deprecated: false
+
+spec:
+  skills: []
+  nodeTypes:
+    - webhook-trigger
+    - http-request
+  permissions:
+    - network:inbound
+
+  inputSchema: ./input-schema.yaml
+  outputSchema: ./output-schema.yaml
+  workflow: ./workflow.yaml
+
+  defaultConfig:
+    verifySignature: true
+    allowedOrigins: []
+    rateLimit: 100
+
+  env:
+    - name: WEBHOOK_SECRET
+      required: false
+      description: Secret for signature verification
+      secret: true
+
+  resources:
+    cpu: "50m"
+    memory: "128Mi"
+    timeout: 30

@@ -1,0 +1,35 @@
+apiVersion: marketplace.axiomstudio.ai/v1
+kind: AgentListing
+metadata:
+  id: json-transformer
+  name: JSON Transformer
+  description: Transform JSON data using templates and mappings
+  version: 1.0.0
+  category: data-processing
+  tags:
+    - json
+    - transformation
+    - etl
+  author: Axiom Studio
+  authorEmail: support@axiomstudio.ai
+  license: Apache-2.0
+  deprecated: false
+
+spec:
+  skills: []
+  nodeTypes:
+    - data-transform
+  permissions: []
+
+  inputSchema: ./input-schema.yaml
+  outputSchema: ./output-schema.yaml
+  workflow: ./workflow.yaml
+
+  defaultConfig:
+    strictMode: false
+    preserveNull: false
+
+  resources:
+    cpu: "50m"
+    memory: "128Mi"
+    timeout: 30

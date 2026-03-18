@@ -1,0 +1,135 @@
+name: Validate Marketplace
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate marketplace.yaml
+        run: |
+          if [ ! -f "marketplace.yaml" ]; then
+            echo "Error: marketplace.yaml not found"
+            exit 1
+          fi
+          echo "✓ marketplace.yaml exists"
+
+      - name: Validate agent directories
+        run: |
+          if [ ! -d "agents" ]; then
+            echo "Error: agents directory not found"
+            exit 1
+          fi
+
+          for agent_dir in agents/*/; do
+            if [ -d "$agent_dir" ]; then
+              agent_name=$(basename "$agent_dir")
+              echo "Validating agent: $agent_name"
+
+              # Check required files
+              if [ ! -f "${agent_dir}agent.yaml" ]; then
+                echo "Error: ${agent_dir}agent.yaml not found"
+                exit 1
+              fi
+
+              if [ ! -f "${agent_dir}workflow.yaml" ]; then
+                echo "Error: ${agent_dir}workflow.yaml not found"
+                exit 1
+              fi
+
+              echo "  ✓ Required files present for $agent_name"
+            fi
+          done
+
+      - name: Validate YAML syntax
+        run: |
+          pip install yamllint
+
+          # Validate all YAML files
+          find . -name "*.yaml" -o -name "*.yml" | while read file; do
+            echo "Validating $file"
+            yamllint -d "{extends: relaxed, rules: {line-length: disable}}" "$file" || true
+          done
+
+      - name: Validate agent.yaml structure
+        run: |
+          pip install pyyaml
+
+          python3 << 'EOF'
+          import yaml
+          import os
+          import sys
+
+          required_fields = ['apiVersion', 'kind', 'metadata', 'spec']
+          metadata_fields = ['id', 'name', 'description', 'version', 'category', 'author']
+          spec_fields = ['workflow']
+
+          errors = []
+
+          for agent_dir in os.listdir('agents'):
+              agent_path = os.path.join('agents', agent_dir, 'agent.yaml')
+              if os.path.exists(agent_path):
+                  with open(agent_path) as f:
+                      try:
+                          agent = yaml.safe_load(f)
+
+                          # Check required top-level fields
+                          for field in required_fields:
+                              if field not in agent:
+                                  errors.append(f"{agent_dir}: Missing required field '{field}'")
+
+                          # Check metadata fields
+                          if 'metadata' in agent:
+                              for field in metadata_fields:
+                                  if field not in agent['metadata']:
+                                      errors.append(f"{agent_dir}: Missing metadata field '{field}'")
+
+                          # Check spec fields
+                          if 'spec' in agent:
+                              for field in spec_fields:
+                                  if field not in agent['spec']:
+                                      errors.append(f"{agent_dir}: Missing spec field '{field}'")
+
+                          print(f"✓ {agent_dir}: agent.yaml structure valid")
+
+                      except yaml.YAMLError as e:
+                          errors.append(f"{agent_dir}: YAML parsing error - {e}")
+
+          if errors:
+              print("\nErrors found:")
+              for error in errors:
+                  print(f"  ✗ {error}")
+              sys.exit(1)
+          else:
+              print("\n✓ All agent.yaml files are valid")
+          EOF
+
+      - name: Check for duplicate agent IDs
+        run: |
+          python3 << 'EOF'
+          import yaml
+          import os
+
+          agent_ids = []
+
+          for agent_dir in os.listdir('agents'):
+              agent_path = os.path.join('agents', agent_dir, 'agent.yaml')
+              if os.path.exists(agent_path):
+                  with open(agent_path) as f:
+                      agent = yaml.safe_load(f)
+                      agent_id = agent.get('metadata', {}).get('id')
+                      if agent_id:
+                          if agent_id in agent_ids:
+                              print(f"Error: Duplicate agent ID '{agent_id}'")
+                              exit(1)
+                          agent_ids.append(agent_id)
+
+          print(f"✓ No duplicate agent IDs found ({len(agent_ids)} unique IDs)")
+          EOF

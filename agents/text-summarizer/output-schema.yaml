@@ -1,0 +1,27 @@
+type: object
+required:
+  - summary
+  - wordCount
+properties:
+  summary:
+    type: string
+    description: The generated summary
+
+  wordCount:
+    type: integer
+    description: Number of words in the summary
+
+  keyPoints:
+    type: array
+    description: Key points extracted from the text
+    items:
+      type: string
+
+  sentiment:
+    type: string
+    description: Overall sentiment of the text
+    enum:
+      - positive
+      - negative
+      - neutral
+      - mixed

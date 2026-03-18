@@ -1,0 +1,25 @@
+type: object
+required:
+  - result
+properties:
+  result:
+    type: object
+    description: Transformed JSON data
+
+  stats:
+    type: object
+    description: Transformation statistics
+    properties:
+      fieldsProcessed:
+        type: integer
+      fieldsTransformed:
+        type: integer
+      errors:
+        type: array
+        items:
+          type: object
+          properties:
+            field:
+              type: string
+            error:
+              type: string

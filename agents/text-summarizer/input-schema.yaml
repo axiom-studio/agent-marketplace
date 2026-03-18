@@ -1,0 +1,30 @@
+type: object
+required:
+  - text
+properties:
+  text:
+    type: string
+    description: The text to summarize
+    minLength: 50
+    maxLength: 50000
+
+  maxLength:
+    type: integer
+    description: Maximum length of summary in words
+    default: 200
+    minimum: 50
+    maximum: 1000
+
+  style:
+    type: string
+    description: Summary style
+    default: concise
+    enum:
+      - concise
+      - detailed
+      - bullet-points
+
+  language:
+    type: string
+    description: Output language code
+    default: en
