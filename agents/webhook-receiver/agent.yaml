@@ -18,7 +18,7 @@ spec:
     - id: webhook
       name: Webhook Trigger
       description: Receive webhook request
-      type: webhook-trigger
+      type: webhook
       position:
         x: 100
         y: 200
@@ -32,14 +32,12 @@ spec:
     - id: validate
       name: Validate
       description: Validate webhook signature
-      type: validation
+      type: if
       position:
         x: 350
         y: 200
       config:
-        rules:
-          - field: headers.X-Hub-Signature-256
-            condition: validSignature
+        condition: "{{webhook.headers.X-Hub-Signature-256 == validSignature}}"
 
     - id: process
       name: Process Event
@@ -58,7 +56,7 @@ spec:
     - id: output
       name: Output
       description: Return response
-      type: output
+      type: email
       position:
         x: 850
         y: 200
@@ -109,8 +107,12 @@ spec:
       description: Whether webhook was processed
 
   dependencies:
+    skills:
+      - id: core
     nodeTypes:
-      - webhook-trigger
-      - http-request
+      - webhook
+      - if
+      - switch
+      - email
     permissions:
       - network:inbound

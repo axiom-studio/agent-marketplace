@@ -36,7 +36,7 @@ spec:
     - id: transform
       name: Transform
       description: Apply transformations
-      type: data-transform
+      type: transform
       position:
         x: 400
         y: 200
@@ -88,5 +88,7 @@ spec:
           type: integer
 
   dependencies:
+    skills:
+      - id: core
     nodeTypes:
-      - data-transform
+      - transform

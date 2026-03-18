@@ -44,7 +44,7 @@ spec:
     - id: smtp
       name: SMTP Sender
       description: Send email via SMTP
-      type: http-request
+      type: http
       position:
         x: 400
         y: 200
@@ -120,6 +120,6 @@ spec:
     skills:
       - id: core
     nodeTypes:
-      - http-request
+      - http
     permissions:
       - network:outbound

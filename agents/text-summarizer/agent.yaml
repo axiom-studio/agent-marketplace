@@ -43,7 +43,7 @@ spec:
     - id: llm
       name: LLM Summarizer
       description: Generate summary using LLM
-      type: llm-inference
+      type: ai
       position:
         x: 400
         y: 200
@@ -127,6 +127,6 @@ spec:
     skills:
       - id: core
     nodeTypes:
-      - llm-inference
+      - ai
     permissions:
       - network:outbound
