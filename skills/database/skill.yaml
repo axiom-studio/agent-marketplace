@@ -1,0 +1,43 @@
+apiVersion: axiom.studio/v1
+kind: Skill
+
+metadata:
+  id: database
+  name: "Database Operations"
+  description: "Powerful database operations for your agents - query, insert, update, delete, and manage transactions across PostgreSQL, MySQL, and more"
+  author: "Axiom Studio"
+  authorEmail: "engineering@axiomstudio.ai"
+  version: 1.0.0
+  license: MIT
+  category: data
+  tags:
+    - database
+    - sql
+    - postgres
+    - mysql
+    - data
+    - storage
+  icon: "https://cdn.axiomstudio.ai/icons/database.svg"
+  color: "#336791"
+
+spec:
+  executorType: grpc
+
+  nodeTypes:
+    - db-query
+    - db-insert
+    - db-update
+    - db-delete
+    - db-transaction
+
+  grpc:
+    port: 50052
+    binary:
+      linux-amd64: skill-database-linux-amd64
+      linux-arm64: skill-database-linux-arm64
+      darwin-amd64: skill-database-darwin-amd64
+      darwin-arm64: skill-database-darwin-arm64
+
+  permissions:
+    - database:read
+    - database:write
